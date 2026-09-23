@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Neon & AI Chatbot - Tiến Thư</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#090d16',
+                        cardBg: '#111827',
+                        neonCyan: '#06b6d4',
+                        neonBlue: '#3b82f6',
+                        neonPurple: '#a855f7'
+                    },
+                    boxShadow: {
+                        'neon-cyan': '0 0 25px rgba(6, 182, 212, 0.4), inset 0 0 15px rgba(6, 182, 212, 0.1)',
+                        'neon-glow': '0 0 35px rgba(168, 85, 247, 0.4)',
+                        'btn-glow': '0 0 25px rgba(6, 182, 212, 0.6)'
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .typing-cursor::after {
+            content: '|';
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        .cursor-glow {
+            position: fixed;
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, rgba(6,182,212,0.15) 0%, rgba(168,85,247,0.05) 50%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+            transition: width 0.3s, height 0.3s;
+        }
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s ease-out;
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .chat-scroll::-webkit-scrollbar { width: 5px; }
+        .chat-scroll::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); }
+        .chat-scroll::-webkit-scrollbar-thumb { background: rgba(6, 182, 212, 0.5); border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-darkBg text-slate-800 dark:text-slate-100 antialiased min-h-screen flex flex-col justify-between relative selection:bg-cyan-500 selection:text-white transition-colors duration-300 overflow-x-hidden">
+
+    <div id="cursor-glow" class="cursor-glow"></div>
+
+    <!-- Thẻ Audio MP3 tích hợp -->
+    <audio id="bg-audio" loop preload="auto">
+        <source src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf756.mp3?filename=lofi-study-112191.mp3" type="audio/mpeg">
+        Trình duyệt của bạn không hỗ trợ thẻ audio.
+    </audio>
+
+    <!-- Header & Navigation -->
+    <header class="sticky top-0 z-50 backdrop-blur-md bg-white/80 dark:bg-darkBg/80 border-b border-slate-200 dark:border-cyan-500/20 transition-colors duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between relative z-10">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-neon-cyan border border-cyan-400/40">
+                    T
+                </div>
+                <span class="font-bold text-xl tracking-tight bg-gradient-to-r from-cyan-500 to-purple-600 dark:from-cyan-400 dark:to-purple-400 bg-clip-text text-transparent">Tiến Thư Portfolio</span>
+            </div>
+            
+            <nav class="hidden md:flex items-center space-x-8 text-sm font-medium text-slate-600 dark:text-slate-400">
+                <a href="#hero" data-i18n="nav_home" class="hover:text-cyan-500 dark:hover:text-cyan-400 transition-colors">Trang Chủ</a>
+                <a href="#skills" data-i18n="nav_skills" class="hover:text-cyan-500 dark:hover:text-cyan-400 transition-colors">Kỹ Năng</a>
+                <a href="#projects" data-i18n="nav_projects" class="hover:text-cyan-500 dark:hover:text-cyan-400 transition-colors">Dự Án</a>
+                <a href="#timeline" data-i18n="nav_timeline" class="hover:text-cyan-500 dark:hover:text-cyan-400 transition-colors">Học Vấn</a>
+                <a href="#contact" data-i18n="nav_contact" class="hover:text-cyan-500 dark:hover:text-cyan-400 transition-colors">Liên Hệ</a>
+            </nav>
+
+            <div class="flex items-center space-x-2 sm:space-x-3">
+                <!-- Nút Đổi Ngôn Ngữ (VI/EN) -->
+                <button onclick="toggleLanguage()" class="px-2.5 py-1.5 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-cyan-400 font-bold text-xs hover:scale-105 transition shadow-sm cursor-pointer flex items-center gap-1" title="Chuyển đổi ngôn ngữ VI/EN">
+                    🌐 <span id="lang-label">EN</span>
+                </button>
+                <!-- Nút Bật/Tắt nhạc nền MP3 -->
+                <button id="music-toggle" onclick="toggleBackgroundMusic()" class="px-3 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-cyan-400 hover:scale-105 transition shadow-sm cursor-pointer flex items-center space-x-1.5" title="Bật/Tắt nhạc nền MP3">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path></svg>
+                    <span id="music-status" class="text-xs font-medium">Bật Nhạc</span>
+                </button>
+                <!-- Nút đổi theme -->
+                <button id="theme-toggle" onclick="toggleTheme()" class="p-2.5 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-cyan-400 hover:scale-105 transition shadow-sm cursor-pointer" title="Chuyển đổi sáng/tối">
+                    <svg id="theme-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow relative z-10">
+        <!-- Hero Section -->
+        <section id="hero" class="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto flex flex-col items-center text-center relative reveal">
+            <div class="absolute top-10 left-1/2 -translate-x-1/2 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-cyan-600 dark:text-cyan-400 bg-cyan-100 dark:bg-cyan-950/60 border border-cyan-500/30 rounded-full mb-6 shadow-[0_0_10px_rgba(6,182,212,0.2)]">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span data-i18n="hero_status">🟢 Đang rảnh cho các dự án freelance</span>
+            </div>
+            
+            <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-6 leading-tight">
+                <span data-i18n="hero_hello">Xin chào, tôi là</span> <span class="bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 dark:from-cyan-400 dark:to-purple-400 bg-clip-text text-transparent">Tiến Thư</span>
+            </h1>
+            
+            <div class="h-12 flex items-center justify-center mb-6">
+                <p id="typing-text" class="text-lg sm:text-xl font-medium text-cyan-600 dark:text-cyan-300 typing-cursor"></p>
+            </div>
+            
+            <p data-i18n="hero_desc" class="max-w-2xl text-base sm:text-lg text-slate-600 dark:text-slate-400 mb-10">
+                Nhà phát triển web đam mê công nghệ. Hãy bật nhạc nền MP3 lofi, trò chuyện với Trợ lý AI và khám phá portfolio của tôi nhé!
+            </p>
+            
+            <div class="flex flex-wrap justify-center gap-4">
+                <a href="#contact" onclick="playClickSound()" data-i18n="btn_contact" class="px-8 py-3.5 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold rounded-xl shadow-btn-glow hover:from-cyan-400 hover:to-blue-500 transition-all duration-300">
+                    Liên Hệ Ngay
+                </a>
+                <button onclick="toggleChatWindow(); playClickSound();" data-i18n="btn_chat" class="px-8 py-3.5 bg-white dark:bg-cardBg border border-cyan-500/30 text-cyan-600 dark:text-cyan-400 font-bold rounded-xl hover:bg-cyan-50 dark:hover:bg-cyan-950/30 transition-all duration-300 shadow-neon-cyan flex items-center gap-2">
+                    <span>💬 Trợ Lý AI Chat</span>
+                </button>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 w-full max-w-4xl mt-16 pt-10 border-t border-cyan-500/20">
+                <div class="bg-white/60 dark:bg-cardBg/60 backdrop-blur-md p-4 rounded-2xl border border-slate-200 dark:border-cyan-500/20 shadow-sm">
+                    <p class="text-2xl sm:text-3xl font-extrabold text-cyan-500 dark:text-cyan-400">10+</p>
+                    <p data-i18n="stat_1" class="text-xs text-slate-600 dark:text-slate-400 mt-1">Dự án hoàn thành</p>
+                </div>
+                <div class="bg-white/60 dark:bg-cardBg/60 backdrop-blur-md p-4 rounded-2xl border border-slate-200 dark:border-cyan-500/20 shadow-sm">
+                    <p class="text-2xl sm:text-3xl font-extrabold text-purple-500 dark:text-purple-400">100%</p>
+                    <p data-i18n="stat_2" class="text-xs text-slate-600 dark:text-slate-400 mt-1">Responsive UI</p>
+                </div>
+                <div class="bg-white/60 dark:bg-cardBg/60 backdrop-blur-md p-4 rounded-2xl border border-slate-200 dark:border-cyan-500/20 shadow-sm">
+                    <p class="text-2xl sm:text-3xl font-extrabold text-cyan-500 dark:text-cyan-400">24/7</p>
+                    <p data-i18n="stat_3" class="text-xs text-slate-600 dark:text-slate-400 mt-1">Hỗ trợ trợ lý AI</p>
+                </div>
+                <div class="bg-white/60 dark:bg-cardBg/60 backdrop-blur-md p-4 rounded-2xl border border-slate-200 dark:border-cyan-500/20 shadow-sm">
+                    <p class="text-2xl sm:text-3xl font-extrabold text-purple-500 dark:text-purple-400">MP3</p>
+                    <p data-i18n="stat_4" class="text-xs text-slate-600 dark:text-slate-400 mt-1">Nhạc nền chất lượng cao</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Skills Section -->
+        <section id="skills" class="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto reveal">
+            <div class="text-center mb-12">
+                <h2 data-i18n="skills_title" class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white mb-2">Kỹ Năng & Công Nghệ</h2>
+                <p data-i18n="skills_sub" class="text-slate-600 dark:text-slate-400 text-sm">Các công cụ và ngôn ngữ tôi sử dụng hàng ngày</p>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-6">
+                <div class="bg-white/90 dark:bg-cardBg/90 backdrop-blur-md border border-slate-200 dark:border-cyan-500/20 p-6 rounded-2xl text-center hover:border-cyan-400 transition-all duration-300 hover:shadow-neon-cyan group">
+                    <div class="text-3xl mb-3 group-hover:scale-110 transition-transform">🌐</div>
+                    <h3 class="font-semibold text-slate-900 dark:text-white">HTML5 / CSS3</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Responsive & Tailwind</p>
+                </div>
+                <div class="bg-white/90 dark:bg-cardBg/90 backdrop-blur-md border border-slate-200 dark:border-cyan-500/20 p-6 rounded-2xl text-center hover:border-cyan-400 transition-all duration-300 hover:shadow-neon-cyan group">
+                    <div class="text-3xl mb-3 group-hover:scale-110 transition-transform">⚡</div>
+                    <h3 class="font-semibold text-slate-900 dark:text-white">JavaScript</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">ES6+ & Async API</p>
+                </div>
+                <div class="bg-white/90 dark:bg-cardBg/90 backdrop-blur-md border border-slate-200 dark:border-cyan-500/20 p-6 rounded-2xl text-center hover:border-cyan-400 transition-all duration-300 hover:shadow-neon-cyan group">
+                    <div class="text-3xl mb-3 group-hover:scale-110 transition-transform">⚛️</div>
+                    <h3 class="font-semibold text-slate-900 dark:text-white">ReactJS</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Components & State</p>
+                </div>
+                <div class="bg-white/90 dark:bg-cardBg/90 backdrop-blur-md border border-slate-200 dark:border-cyan-500/20 p-6 rounded-2xl text-center hover:border-cyan-400 transition-all duration-300 hover:shadow-neon-cyan group">
+                    <div class="text-3xl mb-3 group-hover:scale-110 transition-transform">🛠️</div>
+                    <h3 class="font-semibold text-slate-900 dark:text-white">Git & GitHub</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Version Control</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3 Bước Quy Trình Làm Việc -->
+        <section id="process" class="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto reveal">
+            <div class="text-center mb-12">
+                <div class="inline-block px-3 py-1 text-xs font-semibold uppercase tracking-wider text-cyan-500 bg-cyan-950/60 border border-cyan-500/30 rounded-full mb-3">
+                    💡 <span data-i18n="process_badge">Quy Trình Chuyên Nghiệp</span>
+                </div>
+                <h2 data-i18n="process_title" class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white mb-2">3 Bước Hợp Tác Cùng Tiến Thư</h2>
+                <p data-i18n="process_sub" class="text-slate-600 dark:text-slate-400 text-sm">Đơn giản, minh bạch và hiệu quả cho mọi dự án</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="relative bg-white/90 dark:bg-cardBg/90 backdrop-blur-md border border-cyan-500/30 p-8 rounded-3xl shadow-neon-cyan group hover:-translate-y-2 transition-all duration-300">
+                    <div class="absolute -top-5 left-8 w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 text-white font-extrabold text-xl flex items-center justify-center shadow-btn-glow border border-cyan-300/40">1</div>
+                    <div class="pt-4">
+                        <h3 data-i18n="step1_title" class="text-lg font-bold text-slate-900 dark:text-white mb-3">Trao Đổi Yêu Cầu</h3>
+                        <p data-i18n="step1_desc" class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">Khách hàng gửi ý tưởng hoặc mục tiêu dự án. Chúng ta thảo luận chi tiết về giao diện và tính năng tối ưu nhất.</p>
+                    </div>
+                </div>
+                <div class="relative bg-white/90 dark:bg-cardBg/90 backdrop-blur-md border border-cyan-500/30 p-8 rounded-3xl shadow-neon-cyan group hover:-translate-y-2 transition-all duration-300">
+                    <div class="absolute -top-5 left-8 w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-500 to-purple-600 text-white font-extrabold text-xl flex items-center justify-center shadow-btn-glow border border-purple-300/40">2</div>
+                    <div class="pt-4">
+                        <h3 data-i18n="step2_title" class="text-lg font-bold text-slate-900 dark:text-white mb-3">Thiết Kế & Lập Trình</h3>
+                        <p data-i18n="step2_desc" class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">Tiến Thư tiến hành hiện thực hóa giao diện, tích hợp hiệu ứng Neon ấn tượng, tối ưu responsive và trợ lý AI.</p>
+                    </div>
+                </div>
+                <div class="relative bg-white/90 dark:bg-cardBg/90 backdrop-blur-md border border-cyan-500/30 p-8 rounded-3xl shadow-neon-cyan group hover:-translate-y-2 transition-all duration-300">
+                    <div class="absolute -top-5 left-8 w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-500 to-pink-600 text-white font-extrabold text-xl flex items-center justify-center shadow-btn-glow border border-pink-300/40">3</div>
+                    <div class="pt-4">
+                        <h3 data-i18n="step3_title" class="text-lg font-bold text-slate-900 dark:text-white mb-3">Bàn Giao & Hỗ Trợ</h3>
+                        <p data-i18n="step3_desc" class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">Kiểm tra kỹ lưỡng tốc độ tải trang, bàn giao mã nguồn sạch sẽ kèm hướng dẫn và hỗ trợ bảo trì dài hạn.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Projects Section with Advanced Portfolio Filtering -->
+        <section id="projects" class="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto reveal">
+            <div class="text-center mb-8">
+                <h2 data-i18n="proj_title" class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white mb-2">Dự Án Nổi Bật</h2>
+                <p data-i18n="proj_sub" class="text-slate-600 dark:text-slate-400 text-sm">Khám phá các sản phẩm thực tế tôi từng xây dựng</p>
+            </div>
+
+            <!-- Advanced Filtering Buttons -->
+            <div class="flex flex-wrap justify-center gap-3 mb-10">
+                <button onclick="filterProjects('all')" class="filter-btn px-5 py-2 rounded-xl text-xs font-bold bg-cyan-500 text-white shadow-btn-glow transition cursor-pointer">Tất cả</button>
+                <button onclick="filterProjects('react')" class="filter-btn px-5 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-cyan-400 hover:bg-cyan-500 hover:text-white transition cursor-pointer">ReactJS & Web App</button>
+                <button onclick="filterProjects('ai')" class="filter-btn px-5 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-cyan-400 hover:bg-cyan-500 hover:text-white transition cursor-pointer">AI Apps</button>
+                <button onclick="filterProjects('uiux')" class="filter-btn px-5 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-cyan-400 hover:bg-cyan-500 hover:text-white transition cursor-pointer">UI/UX Design</button>
+            </div>
+
+            <div id="projects-grid" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="project-card bg-white/90 dark:bg-cardBg/90 backdrop-blur-md border border-slate-200 dark:border-cyan-500/30 rounded-2xl overflow-hidden shadow-neon-cyan p-6 flex flex-col justify-between hover:-translate-y-1 transition-all" data-category="ai react">
+                    <div>
+                        <div class="h-40 bg-gradient-to-r from-cyan-900 to-purple-900 rounded-xl mb-4 flex items-center justify-center border border-cyan-500/20 text-cyan-300 font-bold text-lg shadow-inner">
+                            AI Chatbot Portfolio
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Trợ Lý AI Tích Hợp Gemini</h3>
+                        <p class="text-slate-600 dark:text-slate-400 text-sm mb-4">Trang web cá nhân tích hợp mô hình ngôn ngữ lớn AI thông minh, hỗ trợ trả lời mọi câu hỏi về kỹ năng và dự án của Tiến Thư.</p>
+                    </div>
+                    <button onclick="openProjectModal('AI Chatbot Portfolio', 'Trang web cá nhân tích hợp mô hình ngôn ngữ lớn AI thông minh, hỗ trợ trả lời mọi câu hỏi về kỹ năng và dự án của Tiến Thư.', 'HTML5, Tailwind CSS, JavaScript, Gemini API')" class="inline-flex items-center text-cyan-600 dark:text-cyan-400 font-semibold text-sm hover:text-cyan-500 cursor-pointer text-left">
+                        <span data-i18n="proj_view">Xem chi tiết dự án</span>
+                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </button>
+                </div>
+                <div class="project-card bg-white/90 dark:bg-cardBg/90 backdrop-blur-md border border-slate-200 dark:border-cyan-500/30 rounded-2xl overflow-hidden shadow-neon-cyan p-6 flex flex-col justify-between hover:-translate-y-1 transition-all" data-category="react uiux">
+                    <div>
+                        <div class="h-40 bg-gradient-to-r from-purple-900 to-blue-900 rounded-xl mb-4 flex items-center justify-center border border-purple-500/20 text-purple-300 font-bold text-lg shadow-inner">
+                            Nexus Contact Web
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Hệ Thống Liên Hệ Trực Tuyến</h3>
+                        <p class="text-slate-600 dark:text-slate-400 text-sm mb-4">Trang web liên hệ cá nhân tích hợp gửi tin nhắn trực tiếp về Gmail qua Web3Forms với giao diện Neon độc quyền.</p>
+                    </div>
+                    <button onclick="openProjectModal('Nexus Contact Web', 'Trang web liên hệ cá nhân tích hợp gửi tin nhắn trực tiếp về Gmail qua Web3Forms với giao diện Neon độc quyền.', 'HTML5, CSS3, JavaScript, Web3Forms API')" class="inline-flex items-center text-cyan-600 dark:text-cyan-400 font-semibold text-sm hover:text-cyan-500 cursor-pointer text-left">
+                        <span data-i18n="proj_view">Xem chi tiết dự án</span>
+                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Timeline / Học Vấn & Kinh Nghiệm -->
+        <section id="timeline" class="py-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto reveal">
+            <div class="text-center mb-12">
+                <h2 data-i18n="time_title" class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white mb-2">Học Vấn & Hành Trình</h2>
+                <p data-i18n="time_sub" class="text-slate-600 dark:text-slate-400 text-sm">Các cột mốc phát triển chuyên môn của tôi</p>
+            </div>
+            <div class="border-l-2 border-cyan-500/30 ml-4 sm:ml-8 pl-6 space-y-10">
+                <div class="relative">
+                    <span class="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-cyan-500 border-4 border-slate-900 shadow-[0_0_10px_#06b6d4]"></span>
+                    <span class="text-xs font-bold text-cyan-500 dark:text-cyan-400 uppercase tracking-wider">2025 - Hiện tại</span>
+                    <h3 data-i18n="t1_title" class="text-lg font-bold text-slate-900 dark:text-white mt-1">Lập Trình Viên Web Freelance & AI Enthusiast</h3>
+                    <p data-i18n="t1_desc" class="text-slate-600 dark:text-slate-400 text-sm mt-2">Chuyên thiết kế website giao diện tối tân, tích hợp AI API (Gemini), tối ưu trải nghiệm người dùng và SEO hiệu quả.</p>
+                </div>
+                <div class="relative">
+                    <span class="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-purple-500 border-4 border-slate-900 shadow-[0_0_10px_#a855f7]"></span>
+                    <span class="text-xs font-bold text-purple-500 dark:text-purple-400 uppercase tracking-wider">2024 - 2025</span>
+                    <h3 data-i18n="t2_title" class="text-lg font-bold text-slate-900 dark:text-white mt-1">Nghiên cứu Front-End & UI/UX Design</h3>
+                    <p data-i18n="t2_desc" class="text-slate-600 dark:text-slate-400 text-sm mt-2">Tập trung hoàn thiện kỹ năng HTML5, CSS3, JavaScript nâng cao, Tailwind CSS và xây dựng các hệ thống giao diện tương tác cao.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section Ultra Modern -->
+        <section id="contact" class="py-20 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto relative reveal">
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-to-r from-cyan-500/10 to-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch relative z-10">
+                <div class="lg:col-span-5 bg-gradient-to-br from-cyan-950/40 via-slate-900/90 to-purple-950/40 backdrop-blur-xl rounded-3xl border border-cyan-500/30 p-8 flex flex-col justify-between shadow-neon-cyan">
+                    <div>
+                        <div class="inline-block px-3 py-1 text-xs font-semibold uppercase tracking-wider text-cyan-400 bg-cyan-950/80 border border-cyan-500/40 rounded-full mb-6 shadow-[0_0_10px_rgba(6,182,212,0.3)]">
+                            🚀 Let's Connect
+                        </div>
+                        <h3 data-i18n="contact_h" class="text-2xl sm:text-3xl font-extrabold text-white mb-4 leading-snug">
+                            Hợp tác & <br><span class="bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">Trò chuyện cùng tôi</span>
+                        </h3>
+                        <p data-i18n="contact_desc" class="text-slate-300 text-sm leading-relaxed mb-8">
+                            Bạn có dự án thú vị, cơ hội việc làm hoặc muốn trao đổi về lập trình? Hãy gửi tin nhắn cho tôi hoặc kết nối trực tiếp qua các kênh bên dưới.
+                        </p>
+                    </div>
+
+                    <div class="space-y-4 pt-6 border-t border-cyan-500/20">
+                        <a href="mailto:tangtienthu703@gmail.com" class="flex items-center space-x-4 p-3 rounded-2xl bg-white/5 border border-white/10 hover:border-cyan-400/50 hover:bg-white/10 transition group">
+                            <div class="w-10 h-10 rounded-xl bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition">✉️</div>
+                            <div>
+                                <p class="text-xs text-slate-400">Email trực tiếp</p>
+                                <p class="text-sm font-semibold text-white">tangtienthu703@gmail.com</p>
+                            </div>
+                        </a>
+                        <div class="flex items-center space-x-4 p-3 rounded-2xl bg-white/5 border border-white/10">
+                            <div class="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-purple-400">📍</div>
+                            <div>
+                                <p class="text-xs text-slate-400">Địa điểm</p>
+                                <p class="text-sm font-semibold text-white">Nghệ An, Việt Nam</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-7 bg-white/90 dark:bg-cardBg/90 backdrop-blur-xl rounded-3xl border border-slate-200 dark:border-cyan-500/30 shadow-neon-cyan p-8 sm:p-10 flex flex-col justify-between">
+                    <div>
+                        <h3 data-i18n="form_title" class="text-xl font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2"><span>✍️</span> Điền thông tin liên hệ</h3>
+                        <p data-i18n="form_sub" class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-6">Phản hồi nhanh trong vòng 24 giờ làm việc.</p>
+                    </div>
+
+                    <form id="form" action="https://api.web3forms.com/submit" method="POST" class="space-y-5">
+                        <input type="hidden" name="access_key" value="8b878fb6-69dd-4b11-b27f-4eea4e00a098">
+                        <input type="hidden" name="subject" value="Tin nhắn mới từ Portfolio AI của bạn!">
+                        <input type="checkbox" name="botcheck" class="hidden" style="display: none;">
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            <div>
+                                <label data-i18n="label_name" class="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">Họ và Tên <span class="text-pink-500">*</span></label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">👤</span>
+                                    <input type="text" id="name" name="name" required placeholder="Nguyễn Văn A" 
+                                        class="w-full pl-10 pr-4 py-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/80 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30 transition text-sm">
+                                </div>
+                            </div>
+                            <div>
+                                <label data-i18n="label_email" class="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">Địa Chỉ Email <span class="text-pink-500">*</span></label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">📧</span>
+                                    <input type="email" id="email" name="email" required placeholder="name@example.com" 
+                                        class="w-full pl-10 pr-4 py-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/80 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30 transition text-sm">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label data-i18n="label_msg" class="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">Nội Dung Tin Nhắn <span class="text-pink-500">*</span></label>
+                            <textarea id="message" name="message" rows="4" required placeholder="Nhập nội dung bạn muốn trao đổi..." 
+                                class="w-full px-4 py-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/80 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30 transition text-sm resize-none"></textarea>
+                        </div>
+
+                        <div>
+                            <button type="submit" id="submit-btn" onclick="playClickSound()" data-i18n="btn_send"
+                                class="w-full py-4 px-6 text-white bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-600 font-bold rounded-2xl hover:from-cyan-400 hover:to-purple-500 transition-all duration-300 shadow-btn-glow flex items-center justify-center space-x-2 cursor-pointer transform hover:-translate-y-0.5">
+                                <span>Gửi Tin Nhắn Ngay</span>
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                            </button>
+                        </div>
+                        <div id="result" class="text-center text-sm font-medium hidden mt-4 p-4 rounded-2xl border transition-all animate-fade-in"></div>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal Xem Chi Tiết Dự Án -->
+    <div id="project-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white dark:bg-cardBg border border-cyan-500/40 w-[90vw] max-w-lg p-6 rounded-3xl shadow-2xl relative transform scale-95 transition-transform duration-300">
+            <button onclick="closeProjectModal()" class="absolute top-4 right-4 p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-300 hover:bg-slate-200">✕</button>
+            <h3 id="modal-title" class="text-xl font-bold text-slate-900 dark:text-white mb-2">Tiêu đề dự án</h3>
+            <p id="modal-desc" class="text-sm text-slate-600 dark:text-slate-300 mb-4 leading-relaxed">Mô tả chi tiết dự án...</p>
+            <div class="mb-6">
+                <span class="text-xs font-semibold uppercase tracking-wider text-cyan-500">Công nghệ sử dụng:</span>
+                <p id="modal-tech" class="text-sm font-medium text-slate-800 dark:text-cyan-300 mt-1">HTML, Tailwind, JS</p>
+            </div>
+            <button onclick="closeProjectModal()" class="w-full py-3 bg-cyan-500 text-white font-bold rounded-xl shadow-btn-glow">Đóng</button>
+        </div>
+    </div>
+
+    <div class="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+        <div id="chat-window" class="hidden w-[90vw] sm:w-[380px] h-[520px] bg-white/95 dark:bg-cardBg/95 backdrop-blur-2xl border border-cyan-500/40 rounded-3xl shadow-2xl shadow-cyan-500/20 flex flex-col overflow-hidden mb-4 transition-all duration-300 transform scale-95 opacity-0 origin-bottom-right">
+            <div class="bg-gradient-to-r from-cyan-600 to-blue-600 p-4 text-white flex items-center justify-between shadow-md">
+                <div class="flex items-center space-x-3">
+                    <div class="relative">
+                        <div class="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center font-bold text-sm border border-white/40">🤖</div>
+                        <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 border-2 border-cyan-600 rounded-full animate-pulse"></span>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-sm">Trợ lý AI Tiến Thư</h3>
+                        <p class="text-[10px] text-cyan-100 opacity-90">Sẵn sàng hỗ trợ 24/7</p>
+                    </div>
+                </div>
+                <button onclick="toggleChatWindow()" class="p-1.5 rounded-lg hover:bg-white/10 transition text-white">✕</button>
+            </div>
+
+            <div id="chat-messages" class="flex-grow p-4 overflow-y-auto chat-scroll space-y-4 text-sm bg-slate-50/50 dark:bg-slate-950/40">
+                <div class="flex items-start space-x-2">
+                    <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white text-xs shrink-0 shadow">🤖</div>
+                    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-cyan-500/20 p-3 rounded-2xl rounded-tl-sm text-slate-800 dark:text-slate-200 shadow-sm max-w-[80%] leading-relaxed">
+                        Chào bạn! Tôi là trợ lý AI thông minh của <b>Tiến Thư</b>. Bạn muốn hỏi điều gì về kỹ năng, dự án hay liên hệ với Tiến Thư không?
+                    </div>
+                </div>
+            </div>
+
+            <div class="px-3 py-2 bg-slate-100 dark:bg-slate-900/60 border-t border-slate-200 dark:border-slate-800 flex gap-2 overflow-x-auto text-xs">
+                <button onclick="sendPresetMessage('Tiến Thư giỏi những công nghệ nào?')" class="px-3 py-1 rounded-full bg-white dark:bg-slate-800 border border-cyan-500/30 text-cyan-600 dark:text-cyan-400 whitespace-nowrap">💡 Kỹ năng</button>
+                <button onclick="sendPresetMessage('Các dự án nổi bật của Tiến Thư là gì?')" class="px-3 py-1 rounded-full bg-white dark:bg-slate-800 border border-cyan-500/30 text-cyan-600 dark:text-cyan-400 whitespace-nowrap">🚀 Dự án</button>
+                <button onclick="sendPresetMessage('Làm thế nào để liên hệ với Tiến Thư?')" class="px-3 py-1 rounded-full bg-white dark:bg-slate-800 border border-cyan-500/30 text-cyan-600 dark:text-cyan-400 whitespace-nowrap">📬 Liên hệ</button>
+            </div>
+
+            <div class="p-3 bg-white dark:bg-cardBg border-t border-slate-200 dark:border-cyan-500/20 flex items-center space-x-2">
+                <input type="text" id="chat-input" placeholder="Nhập tin nhắn..." 
+                    class="flex-grow px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-cyan-400 transition"
+                    onkeypress="handleChatKeyPress(event)">
+                <button onclick="sendUserMessage()" id="chat-send-btn" class="p-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:scale-105 transition shadow-btn-glow cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Chat Logo / Nút mở Chatbot -->
+        <button onclick="toggleChatWindow(); playClickSound();" class="p-4 rounded-full bg-gradient-to-r from-cyan-500 to-purple-600 text-white shadow-btn-glow hover:scale-110 transition-all duration-300 flex items-center justify-center cursor-pointer group relative">
+            <span class="absolute -top-1 -right-1 w-3 h-3 bg-pink-500 rounded-full animate-ping"></span>
+            <span class="absolute -top-1 -right-1 w-3 h-3 bg-pink-500 rounded-full"></span>
+            <svg class="w-6 h-6 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+        </button>
+    </div>
+
+    <footer class="bg-white dark:bg-darkBg border-t border-slate-200 dark:border-cyan-500/20 py-8 text-center text-sm text-slate-500 relative z-10 transition-colors duration-300">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p>&copy; 2026 - Quản lý bởi <span class="text-cyan-600 dark:text-cyan-400 font-medium">Tiến Thư</span></p>
+            <div class="flex space-x-4 text-xs text-slate-500 dark:text-slate-400">
+                <a href="https://github.com" target="_blank" class="hover:text-cyan-600 dark:hover:text-cyan-400 transition">GitHub</a>
+                <a href="mailto:tangtienthu703@gmail.com" class="hover:text-cyan-600 dark:hover:text-cyan-400 transition">Email Trực Tiếp</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const cursorGlow = document.getElementById('cursor-glow');
+        window.addEventListener('mousemove', (e) => {
+            cursorGlow.style.left = e.clientX + 'px';
+            cursorGlow.style.top = e.clientY + 'px';
+        });
+
+        function revealOnScroll() {
+            const reveals = document.querySelectorAll('.reveal');
+            reveals.forEach(element => {
+                const windowHeight = window.innerHeight;
+                const elementTop = element.getBoundingClientRect().top;
+                if (elementTop < windowHeight - 100) element.classList.add('active');
+            });
+        }
+        window.addEventListener('scroll', revealOnScroll);
+        revealOnScroll();
+
+        // 1. Advanced Project Filter Function
+        function filterProjects(category) {
+            const cards = document.querySelectorAll('.project-card');
+            const buttons = document.querySelectorAll('.filter-btn');
+
+            buttons.forEach(btn => {
+                btn.classList.remove('bg-cyan-500', 'text-white', 'shadow-btn-glow');
+                btn.classList.add('bg-slate-200', 'dark:bg-slate-800', 'text-slate-700', 'dark:text-cyan-400');
+            });
+            event.target.classList.remove('bg-slate-200', 'dark:bg-slate-800', 'text-slate-700', 'dark:text-cyan-400');
+            event.target.classList.add('bg-cyan-500', 'text-white', 'shadow-btn-glow');
+
+            cards.forEach(card => {
+                const cats = card.getAttribute('data-category');
+                if (category === 'all' || cats.includes(category)) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // 2. Đa ngôn ngữ (VI / EN)
+        let currentLang = 'vi';
+        const translations = {
+            vi: {
+                nav_home: "Trang Chủ", nav_skills: "Kỹ Năng", nav_projects: "Dự Án", nav_timeline: "Học Vấn", nav_contact: "Liên Hệ",
+                hero_status: "🟢 Đang rảnh cho các dự án freelance",
+                hero_hello: "Xin chào, tôi là",
+                hero_desc: "Nhà phát triển web đam mê công nghệ. Hãy bật nhạc nền MP3 lofi, trò chuyện với Trợ lý AI và khám phá portfolio của tôi nhé!",
+                btn_contact: "Liên Hệ Ngay", btn_chat: "💬 Trợ Lý AI Chat",
+                stat_1: "Dự án hoàn thành", stat_2: "Responsive UI", stat_3: "Hỗ trợ trợ lý AI", stat_4: "Nhạc nền chất lượng cao",
+                skills_title: "Kỹ Năng & Công Nghệ", skills_sub: "Các công cụ và ngôn ngữ tôi sử dụng hàng ngày",
+                process_badge: "Quy Trình Chuyên Nghiệp", process_title: "3 Bước Hợp Tác Cùng Tiến Thư", process_sub: "Đơn giản, minh bạch và hiệu quả cho mọi dự án",
+                step1_title: "Trao Đổi Yêu Cầu", step1_desc: "Khách hàng gửi ý tưởng hoặc mục tiêu dự án. Chúng ta thảo luận chi tiết về giao diện và tính năng tối ưu nhất.",
+                step2_title: "Thiết Kế & Lập Trình", step2_desc: "Tiến Thư tiến hành hiện thực hóa giao diện, tích hợp hiệu ứng Neon ấn tượng, tối ưu responsive và trợ lý AI.",
+                step3_title: "Bàn Giao & Hỗ Trợ", step3_desc: "Kiểm tra kỹ lưỡng tốc độ tải trang, bàn giao mã nguồn sạch sẽ kèm hướng dẫn và hỗ trợ bảo trì dài hạn.",
+                proj_title: "Dự Án Nổi Bật", proj_sub: "Khám phá các sản phẩm thực tế tôi từng xây dựng", proj_view: "Xem chi tiết dự án",
+                time_title: "Học Vấn & Hành Trình", time_sub: "Các cột mốc phát triển chuyên môn của tôi",
+                t1_title: "Lập Trình Viên Web Freelance & AI Enthusiast", t1_desc: "Chuyên thiết kế website giao diện tối tân, tích hợp AI API (Gemini), tối ưu trải nghiệm người dùng và SEO hiệu quả.",
+                t2_title: "Nghiên cứu Front-End & UI/UX Design", t2_desc: "Tập trung hoàn thiện kỹ năng HTML5, CSS3, JavaScript nâng cao, Tailwind CSS và xây dựng các hệ thống giao diện tương tác cao.",
+                contact_h: "Hợp tác & Trò chuyện cùng tôi", contact_desc: "Bạn có dự án thú vị, cơ hội việc làm hoặc muốn trao đổi về lập trình? Hãy gửi tin nhắn cho tôi hoặc kết nối trực tiếp qua các kênh bên dưới.",
+                form_title: "Điền thông tin liên hệ", form_sub: "Phản hồi nhanh trong vòng 24 giờ làm việc.",
+                label_name: "Họ và Tên", label_email: "Địa Chỉ Email", label_msg: "Nội Dung Tin Nhắn", btn_send: "Gửi Tin Nhắn Ngay"
+            },
+            en: {
+                nav_home: "Home", nav_skills: "Skills", nav_projects: "Projects", nav_timeline: "Timeline", nav_contact: "Contact",
+                hero_status: "🟢 Available for freelance projects",
+                hero_hello: "Hello, I am",
+                hero_desc: "Passionate web developer. Turn on MP3 lofi music, chat with the AI Assistant, and explore my portfolio!",
+                btn_contact: "Contact Now", btn_chat: "💬 AI Chat Assistant",
+                stat_1: "Completed Projects", stat_2: "Responsive UI", stat_3: "AI Support 24/7", stat_4: "High Quality Music",
+                skills_title: "Skills & Technologies", skills_sub: "Tools and languages I use daily",
+                process_badge: "Professional Workflow", process_title: "3 Steps to Collaborate with Tien Thu", process_sub: "Simple, transparent, and efficient for any project",
+                step1_title: "Requirements Discussion", step1_desc: "Clients share their ideas or project goals. We discuss detailed interface and optimal features.",
+                step2_title: "Design & Development", step2_desc: "Tien Thu brings the interface to life with stunning Neon effects, full responsiveness, and AI integration.",
+                step3_title: "Handover & Support", step3_desc: "Thorough speed testing, clean code handover with instructions, and long-term maintenance support.",
+                proj_title: "Featured Projects", proj_sub: "Explore real products I have built", proj_view: "View Project Details",
+                time_title: "Education & Journey", time_sub: "My professional development milestones",
+                t1_title: "Freelance Web Developer & AI Enthusiast", t1_desc: "Specializing in cutting-edge neon UI websites, Gemini AI API integration, and performance optimization.",
+                t2_title: "Front-End Research & UI/UX Design", t2_desc: "Focusing on advanced HTML5, CSS3, JavaScript, Tailwind CSS, and interactive interface systems.",
+                contact_h: "Let's Collaborate & Chat", contact_desc: "Got an exciting project, job opportunity, or want to talk about programming? Send me a message below.",
+                form_title: "Fill Contact Information", form_sub: "Quick response within 24 business hours.",
+                label_name: "Full Name", label_email: "Email Address", label_msg: "Message Content", btn_send: "Send Message Now"
+            }
+        };
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'vi' ? 'en' : 'vi';
+            document.getElementById('lang-label').textContent = currentLang.toUpperCase();
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[currentLang][key]) {
+                    el.textContent = translations[currentLang][key];
+                }
+            });
+        }
+
+        function openProjectModal(title, desc, tech) {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-desc').textContent = desc;
+            document.getElementById('modal-tech').textContent = tech;
+            const modal = document.getElementById('project-modal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('div').classList.remove('scale-95');
+                modal.querySelector('div').classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeProjectModal() {
+            const modal = document.getElementById('project-modal');
+            modal.classList.add('opacity-0');
+            modal.querySelector('div').classList.remove('scale-100');
+            modal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        }
+
+        const words = ["Web Developer & AI Enthusiast", "Neon UI Designer", "Full-stack Explorer"];
+        let i = 0;
+        function typingEffect() {
+            let word = words[i].split("");
+            var loopTyping = function() {
+                if (word.length > 0) {
+                    document.getElementById('typing-text').innerHTML += word.shift();
+                } else {
+                    setTimeout(deletingEffect, 2000);
+                    return false;
+                }
+                setTimeout(loopTyping, 100);
+            };
+            loopTyping();
+        }
+        function deletingEffect() {
+            let word = words[i].split("");
+            var loopDeleting = function() {
+                if (word.length > 0) {
+                    word.pop();
+                    document.getElementById('typing-text').innerHTML = word.join("");
+                } else {
+                    i = (i + 1) < words.length ? i + 1 : 0;
+                    setTimeout(typingEffect, 500);
+                    return false;
+                }
+                setTimeout(loopDeleting, 50);
+            };
+            loopDeleting();
+        }
+        typingEffect();
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const themeIcon = document.getElementById('theme-icon');
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                themeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>`;
+            } else {
+                html.classList.add('dark');
+                themeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>`;
+            }
+        }
+
+        let isMusicPlaying = false;
+        const bgAudio = document.getElementById('bg-audio');
+        bgAudio.volume = 0.4;
+
+        function toggleBackgroundMusic() {
+            const musicStatus = document.getElementById('music-status');
+            const musicToggleBtn = document.getElementById('music-toggle');
+            if (isMusicPlaying) {
+                bgAudio.pause();
+                isMusicPlaying = false;
+                musicStatus.textContent = currentLang === 'vi' ? 'Bật Nhạc' : 'Play Music';
+                musicToggleBtn.classList.remove('bg-cyan-500', 'text-white', 'shadow-btn-glow');
+                musicToggleBtn.classList.add('bg-slate-200', 'dark:bg-slate-800', 'text-slate-700', 'dark:text-cyan-400');
+            } else {
+                bgAudio.play().then(() => {
+                    isMusicPlaying = true;
+                    musicStatus.textContent = currentLang === 'vi' ? 'Đang Phát' : 'Playing';
+                    musicToggleBtn.classList.remove('bg-slate-200', 'dark:bg-slate-800', 'text-slate-700', 'dark:text-cyan-400');
+                    musicToggleBtn.classList.add('bg-cyan-500', 'text-white', 'shadow-btn-glow');
+                }).catch(e => {
+                    alert("Trình duyệt yêu cầu bạn tương tác trước khi phát nhạc. Vui lòng bấm vào nút 'Bật Nhạc' một lần nữa nhé!");
+                });
+            }
+        }
+
+        function playClickSound() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(580, audioCtx.currentTime);
+                gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+                osc.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.08);
+            } catch (e) {}
+        }
+
+        function toggleChatWindow() {
+            const win = document.getElementById('chat-window');
+            if (win.classList.contains('hidden')) {
+                win.classList.remove('hidden');
+                setTimeout(() => {
+                    win.classList.remove('scale-95', 'opacity-0');
+                    win.classList.add('scale-100', 'opacity-100');
+                }, 10);
+                document.getElementById('chat-input').focus();
+            } else {
+                win.classList.remove('scale-100', 'opacity-100');
+                win.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => { win.classList.add('hidden'); }, 300);
+            }
+        }
+
+        let chatHistory = [];
+        function handleChatKeyPress(e) { if (e.key === 'Enter') sendUserMessage(); }
+        function sendPresetMessage(text) { document.getElementById('chat-input').value = text; sendUserMessage(); }
+
+        async function sendUserMessage() {
+            const inputEl = document.getElementById('chat-input');
+            const messageText = inputEl.value.trim();
+            if (!messageText) return;
+            inputEl.value = '';
+            appendMessage(messageText, 'user');
+            const loadingId = appendLoadingMessage();
+
+            try {
+                const systemPrompt = "Bạn là trợ lý AI thông minh trên website portfolio của Tiến Thư (Tăng Tiến Thư). Hãy trả lời lịch sự, thân thiện, ngắn gọn và chính xác bằng tiếng Việt. Thông tin: Lập trình viên web trẻ đam mê UI/UX, thành thạo HTML/CSS, Tailwind, JavaScript, ReactJS, Git, và xây dựng các trang web giao diện Neon. Email: tangtienthu703@gmail.com.";
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+                chatHistory.push({ role: "user", parts: [{ text: messageText }] });
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: chatHistory, systemInstruction: { parts: [{ text: systemPrompt }] } })
+                });
+                const result = await response.json();
+                removeLoadingMessage(loadingId);
+                const aiReply = result.candidates?.[0]?.content?.parts?.[0]?.text || "Xin lỗi, tôi đang gặp chút sự cố kết nối. Bạn hãy thử lại sau nhé!";
+                appendMessage(aiReply, 'bot');
+                chatHistory.push({ role: "model", parts: [{ text: aiReply }] });
+            } catch (err) {
+                removeLoadingMessage(loadingId);
+                appendMessage("Không thể kết nối đến máy chủ AI.", 'bot');
+            }
+        }
+
+        function appendMessage(text, sender) {
+            const container = document.getElementById('chat-messages');
+            const div = document.createElement('div');
+            if (sender === 'user') {
+                div.className = "flex items-end justify-end space-x-2";
+                div.innerHTML = `<div class="bg-gradient-to-r from-cyan-500 to-blue-600 text-white p-3 rounded-2xl rounded-tr-sm shadow-sm max-w-[80%] leading-relaxed">${escapeHtml(text)}</div><div class="w-7 h-7 rounded-full bg-slate-700 flex items-center justify-center text-white text-xs shrink-0 shadow">👤</div>`;
+            } else {
+                div.className = "flex items-start space-x-2";
+                div.innerHTML = `<div class="w-7 h-7 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white text-xs shrink-0 shadow">🤖</div><div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-cyan-500/20 p-3 rounded-2xl rounded-tl-sm text-slate-800 dark:text-slate-200 shadow-sm max-w-[80%] leading-relaxed">${formatMarkdown(text)}</div>`;
+            }
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function appendLoadingMessage() {
+            const container = document.getElementById('chat-messages');
+            const id = 'loading-' + Date.now();
+            const div = document.createElement('div');
+            div.id = id;
+            div.className = "flex items-start space-x-2";
+            div.innerHTML = `<div class="w-7 h-7 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white text-xs shrink-0 shadow">🤖</div><div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-cyan-500/20 p-3 rounded-2xl rounded-tl-sm text-slate-800 dark:text-slate-200 shadow-sm flex items-center space-x-1.5"><span class="w-2 h-2 bg-cyan-500 rounded-full animate-bounce"></span><span class="w-2 h-2 bg-cyan-500 rounded-full animate-bounce [animation-delay:0.2s]"></span><span class="w-2 h-2 bg-cyan-500 rounded-full animate-bounce [animation-delay:0.4s]"></span></div>`;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+            return id;
+        }
+
+        function removeLoadingMessage(id) { const el = document.getElementById(id); if (el) el.remove(); }
+        function escapeHtml(text) { return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+        function formatMarkdown(text) { return escapeHtml(text).replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>'); }
+
+        const form = document.getElementById('form');
+        const result = document.getElementById('result');
+        const submitBtn = document.getElementById('submit-btn');
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(form);
+            result.classList.remove('hidden');
+            result.className = "text-center text-sm font-medium mt-4 p-3 rounded-xl bg-cyan-100 dark:bg-cyan-950/80 text-cyan-800 dark:text-cyan-300 border border-cyan-500/40";
+            result.innerHTML = "⚡ Đang truyền tải tin nhắn...";
+            submitBtn.disabled = true;
+
+            fetch('https://api.web3forms.com/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify(Object.fromEntries(formData))
+            }).then(async (res) => {
+                let jsonRes = await res.json();
+                if (res.status == 200) {
+                    result.className = "text-center text-sm font-medium mt-4 p-3 rounded-xl bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-500/40";
+                    result.innerHTML = "🎉 Gửi thành công! Tin nhắn đã tới tangtienthu703@gmail.com.";
+                    form.reset();
+                } else {
+                    result.className = "text-center text-sm font-medium mt-4 p-3 regulation-error bg-rose-100 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300 border border-rose-500/40";
+                    result.innerHTML = jsonRes.message || "Đã có lỗi xảy ra.";
+                }
+            }).catch(() => {
+                result.className = "text-center text-sm font-medium mt-4 p-3 rounded-xl bg-rose-100 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300 border border-rose-500/40";
+                result.innerHTML = "Không thể kết nối máy chủ.";
+            }).finally(() => { submitDb.disabled = false; });
+        });
+    </script>
+</body>
+</html>
